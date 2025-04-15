@@ -8,6 +8,22 @@ outputs:
     description: "List of all deleted branches"
     value: ${{ steps.deleted-branches.outputs.deleted-branches }}
 inputs:
+  gh-repo:
+    description: 'GitHub repository in the format owner/repo.'
+    required: true
+    default: ''
+  gh-token:
+    description: 'GitHub token with repo permissions.'
+    required: true
+    default: ''
+  sender:
+    description: 'Email address of the sender.'
+    required: true
+    default: ''
+  password:
+    description: 'Password for the sender email.'
+    required: true
+    default: ''
   days-to-notify:
     description: "Number of minimum days to send slack notification"
     required: true
@@ -16,6 +32,22 @@ inputs:
     description: "Number of minimum days to delete branch"
     required: true
     default: "75"
+  default-branch:
+    description: 'Default branch name.'
+    required: true
+    default: 'develop'
+  branches-to-be-ignored:
+    description: 'A comma-separated list of branches to be ignored.'
+    required: false
+    default: '^(release\/.+|develop|main)$'
+  branches-filter-regex:
+    description: 'An optional Regex that will be used to filter branches from this action.'
+    required: false
+    default: '^feature\/.+$'
+  dry-run:
+    description: 'If this is enabled, the action will not delete or tag any branches.'
+    required: false
+    default: 'true'
 runs:
   using: "composite"
   steps:
@@ -31,9 +63,18 @@ runs:
     - name: Triage branches
       working-directory: "${{ github.action_path }}"
       run: |
-        output=$(pipenv run python3 src/purge_branches.py --delete-days inputs.days-to-delete --notify-days inputs.days-to-notify)
-        echo "::set-output name=deleted-branches::$output"
-      id: deleted-branches
+        output=$(pipenv run python3 src/purge_branches.py \
+          --repo "${{ inputs.gh-repo }}" \
+          --token "${{ inputs.gh-token }}" \
+          --sender "${{ inputs.sender }}" \
+          --password "${{ inputs.password }}" \
+          --days-to-notify "${{ inputs.days-to-notify }}" \
+          --days-to-delete "${{ inputs.days-to-delete }}" \
+          --default-branch "${{ inputs.default-branch }}" \
+          --branches-to-be-ignored "${{ inputs.branches-to-be-ignored }}" \
+          --branches-filter-regex "${{ inputs.branches-filter-regex }}" \
+          --dry-run "${{ inputs.dry-run }}" )
+        echo "::set-output name=deleted-branches::$output"   id: deleted-branches
       shell: bash
     - name: Print deleted branches
       run: echo "Print deleted branches -- ${{ steps.deleted-branches.outputs.deleted-branches }}"
