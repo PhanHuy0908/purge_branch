@@ -193,9 +193,9 @@ def send_slack_message(args, slack_reminder):
         """
 
         title = f"You have old branches in repo {args.gh_repo}"
-        # if args.dry_run == "true":
-        #     logging.info(f"DRY RUN: Would send email to {user_email}")
-        #     continue
+        if args.dry_run == "true":
+            logging.info(f"DRY RUN: Would send email to {user_email}")
+            continue
         logging.info(f"Sending email to {user_email}")
         send_internal_email(args.sender, args.password, user_email, title, html_message)
 
@@ -218,7 +218,7 @@ def parse_args():
     parser.add_argument(
         '--default-branch', help='Default branch name.')
     parser.add_argument(
-        '--branches-to-be-ignored', help='An optional Regex that will be used to ignore branches from this action.', default="^(release\/.+|develop|main)$")
+        '--branches-to-be-ignored', help='An optional Regex that will be used to ignore branches from this action.')
     parser.add_argument(
         '--branches-filter-regex', help='An optional Regex that will be used to filter branches from this action')
     parser.add_argument(
@@ -231,19 +231,17 @@ def parse_args():
 
 def main():
     args = parse_args()
-    # log_level = logging.DEBUG if args.verbose else logging.INFO
-    # logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=log_level)
-    # if not args.gh_repo or not args.gh_token:
-    #     logging.error("Missing required arguments")
-    #     sys.exit(1)
-    # all_branches = grab_all_branches(args)
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=log_level)
+    if not args.gh_repo or not args.gh_token:
+        logging.error("Missing required arguments")
+        sys.exit(1)
+    all_branches = grab_all_branches(args)
 
-    # if all_branches:
-    #     triage_branches(args, all_branches)
-    # else:
-    #     logging.info("No branches found")
-    print(vars(args))
-
+    if all_branches:
+        triage_branches(args, all_branches)
+    else:
+        logging.info("No branches found")
 
 if __name__ == "__main__":
     main()
